@@ -8,12 +8,19 @@ Gem::Specification.new do |spec|
   spec.authors = ["Ethan"]
   spec.email = ["ethan@unth.net"]
 
-  spec.summary = "TODO: Write a short summary, because RubyGems requires one."
-  spec.description = "TODO: Write a longer description or delete this line."
-  spec.homepage = "TODO: Put your gem's website or public repo URL here."
+  spec.summary = "A Github API client - unofficial, unaffiliated"
+  spec.description = "Nonacat builds from Github's OpenAPI description using the gem `scorpio` to offer an alternative client to Github's REST API."
+  spec.homepage = "https://github.com/notEthan/nonacat"
   spec.license = "MIT"
 
   spec.files = [
+    'LICENSE.txt',
+    'README.md',
+    'nonacat.gemspec',
+    *Dir['lib/**/*'],
   ].reject { |f| File.lstat(f).ftype == 'directory' }
+
   spec.require_paths = ["lib"]
+
+  spec.add_dependency('scorpio', '~> 0.6')
 end
