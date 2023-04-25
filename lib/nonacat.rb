@@ -39,5 +39,17 @@ module Nonacat
     #     Nonacat.authorization = ['Bearer', 'github_pat_2kxqIkfByCRkCGT2...']
     #     Nonacat.authorization = [:basic, 'notEthan', 'p4$$w0rd']
     attr_accessor(:authorization)
+
+    # yields each item in each page when paginated results contain an object with attribute 'items'
+    def paginate_object_items(operation, **conf, &block)
+      return to_enum(__method__, operation, **conf) unless block_given?
+      operation.each_link_page(**conf) { |page_ur| page_ur.response.body_object['items'].each(&block) }
+    end
+
+    # yields each item in each page when paginated results contain an array of items
+    def paginate_array_items(operation, **conf, &block)
+      return to_enum(__method__, operation, **conf) unless block_given?
+      operation.each_link_page(**conf) { |page_ur| page_ur.response.body_object.each(&block) }
+    end
   end
 end
