@@ -2,7 +2,7 @@
 
 A Github API client - unofficial, unaffiliated
 
-Nonacat uses [Scorpio](https://github.com/notEthan/scorpio) with [Github's OpenAPI description](https://github.com/github/rest-api-description) to be a client to the service. Nonacat builds a small amount of infrastructure to simplify things like authentication, but otherwise relies wholly on the OpenAPI document for implementation of the client.
+Nonacat uses [Scorpio](https://github.com/notEthan/scorpio) with [Github's OpenAPI description](https://github.com/github/rest-api-description) to be a client to the service. Nonacat builds a small amount of infrastructure to simplify things like authentication and pagination, but otherwise relies wholly on the OpenAPI document for implementation of the client.
 
 ## Usage
 
@@ -43,6 +43,10 @@ Nonacat includes an executable `nonacat`, which is just IRB with nonacat loaded 
 - Authentication is loaded from the same source as the github [`gh` CLI](https://cli.github.com/), if available.
 - Tab-completable references to operations are defined. Github's operations are categorized, e.g. the `repos/get` operation with category `repos`. The `nonacat` executable defines constants like `Nonacat::REPOS` for each category, which in turn contain constants for each operation. With these, `Nonacat::REPOS::GET` refers to the same operation as `Nonacat::GITHUB_API.operations['repos/get']`.
 
+### Pagination
+
+Many Github API operations paginate results. {Nonacat.paginate_items} abstracts pagination - see its method doc, and examples below.
+
 ### Examples
 
 - Get Zen (no auth required)
@@ -71,6 +75,34 @@ Returns (trimmed)
   "url" => "https://api.github.com/repos/notEthan/scorpio",
   "forks_url" => "https://api.github.com/repos/notEthan/scorpio/forks",
   "language" => "Ruby",
+}
+```
+
+- Search code, paginated (requires auth) - this pauses between each item; press enter to continue or `q` + enter to quit.
+
+```ruby
+Nonacat.paginate_items('search/code', q: 'nonacat', per_page: 4) do |item|
+  pp(item)
+  break if gets.chomp == 'q'
+end
+```
+
+Output (trimmed):
+
+```
+#{<JSI (Nonacat::Github::CodeSearchResultItem)>
+  "name" => "nonacat.rb",
+  "path" => "lib/nonacat.rb",
+  "url" => "https://api.github.com/repositories/898892904/contents/lib/nonacat.rb?ref=a253ff2a2c9b1229f2feea63f22a6ba7b21d1dd3",
+  "repository" => #{<JSI (Nonacat::Github::MinimalRepository)>
+    "name" => "nonacat",
+    "full_name" => "notEthan/nonacat",
+    "owner" => #{<JSI (Nonacat::Github::SimpleUser)>
+      "login" => "notEthan",
+    },
+    "html_url" => "https://github.com/notEthan/nonacat",
+  },
+  "score" => 1.0
 }
 ```
 
@@ -106,6 +138,21 @@ Returns (trimmed)
     "login" => "notEthan",
   },
 }
+```
+
+- Get the date when each tag in a repo was committed - this uses pagination, and nests API calls; getting rate limited is possible on a repository with many tags.
+
+```ruby
+Nonacat.paginate_items("repos/list-tags", owner: 'notEthan', repo: 'nonacat').map do |tag|
+  {
+    name: tag.name,
+    date: Nonacat::GITHUB_API.operations["repos/get-commit"].run(
+      owner: 'notEthan',
+      repo: 'nonacat',
+      ref: tag.commit.sha,
+    ).commit.committer.date,
+  }
+end
 ```
 
 ## Development
