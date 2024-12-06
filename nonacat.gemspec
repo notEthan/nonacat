@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
     *Dir['lib/**/*'],
     'github-rest-api-description/LICENSE.md',
     'github-rest-api-description/api.github.com.json.zz',
+    'github-rest-api-description/updated.yml',
   ].reject { |f| File.lstat(f).ftype == 'directory' }
 
   spec.require_paths = ["lib"]
