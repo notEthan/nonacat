@@ -40,16 +40,37 @@ module Nonacat
     #     Nonacat.authorization = [:basic, 'notEthan', 'p4$$w0rd']
     attr_accessor(:authorization)
 
-    # yields each item in each page when paginated results contain an object with attribute 'items'
-    def paginate_object_items(operation, **conf, &block)
+    # Yields each item in each page of results from the indicated operation.
+    #
+    # @param operation [String, Scorpio::OpenAPI::Operation] an operationId or an Operation
+    # @yield [JSI::Base] each item in each page of results
+    # @return [nil, Enumerator]
+    def paginate_items(operation, **conf, &block)
       return to_enum(__method__, operation, **conf) unless block_given?
-      operation.each_link_page(**conf) { |page_ur| page_ur.response.body_object['items'].each(&block) }
-    end
+      operation = operation.is_a?(Scorpio::OpenAPI::Operation) ? operation : GITHUB_API.operations[operation]
 
-    # yields each item in each page when paginated results contain an array of items
-    def paginate_array_items(operation, **conf, &block)
-      return to_enum(__method__, operation, **conf) unless block_given?
-      operation.each_link_page(**conf) { |page_ur| page_ur.response.body_object.each(&block) }
+      # detect pagination by response schemas
+      each_item = nil
+      operation.responses.each do |status, oa_response|
+        next if status.to_s !~ /^2..$/
+        oa_response['content'].each_value.select(&:schema).each do |oa_media_type|
+          # TODO not very good
+          oa_media_type.schema.each_inplace_applicator_schema(nil) do |ias|
+            if ias.items
+              # each page is an array with each item
+              each_item = proc { |body_object| body_object }
+            elsif ias.properties && ias.properties['items'] && ias.properties['items'].items
+              # each page is an object with property 'items' containing an array with each item
+              each_item = proc { |body_object| body_object.items }
+            end
+          end
+        end
+      end
+      raise("pagination not detected in operation: #{operation.pretty_inspect.chomp}") if !each_item
+
+      operation.each_link_page(**conf) do |page_ur|
+        each_item[page_ur.response.body_object].each(&block)
+      end
     end
   end
 end
