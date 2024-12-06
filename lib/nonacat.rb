@@ -14,6 +14,8 @@ module Nonacat
   # A [Scorpio::OpenAPI::Document](https://rubydoc.info/gems/scorpio/Scorpio/OpenAPI/Document) for Github's API
   GITHUB_API = Scorpio.new_document(JSON.parse(Zlib.inflate(GITHUB_API_PATH.read)))
 
+  module Github end
+
   GITHUB_API.faraday_builder = proc do |conn|
     conn.request(:authorization, *Nonacat.authorization) if Nonacat.authorization
     conn.use(Faraday::FollowRedirects::Middleware)
