@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+
+# Fetch Github's OpenAPI document from the current `main` branch of https://github.com/github/rest-api-description
+# For the gem, store the JSON compressed with zlib since, at 11 MB, it is rather excessive.
+# For development, store the YAML for readability.
+
+require('pathname')
+require('net/http')
+require('zlib')
+require('json')
+require('yaml')
+
+api_dir = Pathname.new(__dir__).join('../github-rest-api-description')
+api_dir.mkdir if !api_dir.exist?
+
+def get_body(url)
+  response = Net::HTTP.get_response(URI(url))
+  raise("#{url} responded status: #{response.code}, body: #{response.body}") if !response.is_a?(Net::HTTPSuccess)
+  response.body
+end
+
+STDERR.puts("fetching LICENSE.md")
+(api_dir / 'LICENSE.md').write(get_body('https://raw.githubusercontent.com/github/rest-api-description/refs/heads/main/LICENSE.md'))
+
+STDERR.puts("fetching api.github.com.json")
+# getting this from the API is another option but it doesn't gzip so much slower
+# at: 'https://api.github.com/repos/github/rest-api-description/contents/descriptions/api.github.com/api.github.com.json?ref=main'
+# with accept: 'application/vnd.github.raw'
+api_json = get_body('https://raw.githubusercontent.com/github/rest-api-description/refs/heads/main/descriptions/api.github.com/api.github.com.json')
+(api_dir / 'api.github.com.json.zz').write(Zlib.deflate(api_json))
+
+# the YAML can be useful to browse for development but is excluded from the gem and git repo due to size
+STDERR.puts("fetching api.github.com.yaml")
+api_yaml = get_body('https://raw.githubusercontent.com/github/rest-api-description/refs/heads/main/descriptions/api.github.com/api.github.com.yaml')
+(api_dir / 'api.github.com.yaml').write(api_yaml)
+
+# sanity check
+unless JSON.parse(api_json) == YAML.safe_load(api_yaml)
+  abort("api.github.com.yaml != api.github.com.json")
+end
+
+STDERR.puts("updated!")

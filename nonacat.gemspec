@@ -18,11 +18,13 @@ Gem::Specification.new do |spec|
     'README.md',
     'nonacat.gemspec',
     *Dir['lib/**/*'],
+    'github-rest-api-description/LICENSE.md',
+    'github-rest-api-description/api.github.com.json.zz',
   ].reject { |f| File.lstat(f).ftype == 'directory' }
 
   spec.require_paths = ["lib"]
   spec.bindir        = 'bin'
-  spec.executables   = []
+  spec.executables   = ['nonacat_update']
 
   spec.add_dependency('scorpio', '~> 0.7')
 end
