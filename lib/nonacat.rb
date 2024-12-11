@@ -47,6 +47,14 @@ module Nonacat
           Github.const_set(const_name, node.jsi_schema_module) if const_name && !Github.constants.include?(const_name.to_sym)
         end
       end
+
+      node_describes_url = node.jsi_is_schema? && (
+        node.keyword_value?('format', 'uri') ||
+        (node.keyword_value?('type', 'string') && node.example.respond_to?(:to_str) && node.example['://'])
+      )
+      if node_describes_url
+        node.jsi_schema_module.include(Nonacat::Link)
+      end
     end,
   )
 
