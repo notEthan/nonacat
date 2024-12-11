@@ -12,7 +12,11 @@ module Nonacat
   GITHUB_API_PATH = Pathname.new(__dir__).join(-"../github-rest-api-description/api.github.com.oas-#{oas}.json.zz")
 
   # A [Scorpio::OpenAPI::Document](https://rubydoc.info/gems/scorpio/Scorpio/OpenAPI/Document) for Github's API
-  GITHUB_API = Scorpio.new_document(JSON.parse(Zlib.inflate(GITHUB_API_PATH.read)))
+  GITHUB_API = Scorpio.new_document(
+    JSON.parse(Zlib.inflate(GITHUB_API_PATH.read)),
+    after_initialize: proc do |node|
+    end,
+  )
 
   Github = GITHUB_API.jsi_schema_module_connection
   module Github end
