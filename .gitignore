@@ -1,4 +1,4 @@
 /.yardoc
 /doc/
 /Gemfile.lock
-/github-rest-api-description/api.github.com.yaml
+/github-rest-api-description/api.github.com.*.yaml

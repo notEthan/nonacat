@@ -5,13 +5,13 @@
 # For development, store the YAML for readability.
 
 require('pathname')
+require('fileutils')
 require('net/http')
 require('zlib')
 require('json')
 require('yaml')
 
 api_dir = Pathname.new(__dir__).join('../github-rest-api-description')
-api_dir.mkdir if !api_dir.exist?
 
 def get_body(url)
   response = Net::HTTP.get_response(URI(url))
@@ -22,30 +22,31 @@ end
 ref = ARGV[0] || 'main'
 commit = JSON.parse(get_body("https://api.github.com/repos/github/rest-api-description/commits/#{ref}"))
 
-if (api_dir / 'updated.yml').exist? && YAML.safe_load_file(api_dir / 'updated.yml')['sha'] == commit['sha']
-  STDERR.puts("already up to date at commit #{commit['sha']}; skipping (rm #{api_dir / 'updated.yml'} to force)")
-  exit
+at_latest = (api_dir / 'updated.yml').exist? && YAML.safe_load_file(api_dir / 'updated.yml')['sha'] == commit['sha']
+
+# copy from github
+ghcp = proc do |local_path, github_path, zz: false|
+  if at_latest && (api_dir / local_path).exist?
+    STDERR.puts("#{api_dir / local_path} already up to date at commit #{commit['sha']}; skipping")
+    next
+  end
+  STDERR.puts("fetching #{local_path}")
+  # getting this from the API is another option but it doesn't gzip so much slower
+  # at: "https://api.github.com/repos/github/rest-api-description/contents/#{github_path}?ref=#{commit['sha']}"
+  # with accept: 'application/vnd.github.raw'
+  url = "https://raw.githubusercontent.com/github/rest-api-description/#{commit['sha']}/#{github_path}"
+  FileUtils.mkdir_p((api_dir / local_path).dirname)
+  content = get_body(url)
+  content = Zlib.deflate(content) if zz
+  (api_dir / local_path).write(content)
 end
 
-STDERR.puts("fetching LICENSE.md")
-(api_dir / 'LICENSE.md').write(get_body("https://raw.githubusercontent.com/github/rest-api-description/#{commit['sha']}/LICENSE.md"))
-
-STDERR.puts("fetching api.github.com.json")
-# getting this from the API is another option but it doesn't gzip so much slower
-# at: "https://api.github.com/repos/github/rest-api-description/contents/descriptions/api.github.com/api.github.com.json?ref=#{commit['sha']}"
-# with accept: 'application/vnd.github.raw'
-api_json = get_body("https://raw.githubusercontent.com/github/rest-api-description/#{commit['sha']}/descriptions/api.github.com/api.github.com.json")
-(api_dir / 'api.github.com.json.zz').write(Zlib.deflate(api_json))
-
+ghcp['LICENSE.md', 'LICENSE.md']
+ghcp['api.github.com.oas-3-0.json.zz', 'descriptions/api.github.com/api.github.com.json', zz: true]
+ghcp['api.github.com.oas-3-1.json.zz', 'descriptions-next/api.github.com/api.github.com.json', zz: true]
 # the YAML can be useful to browse for development but is excluded from the gem and git repo due to size
-STDERR.puts("fetching api.github.com.yaml")
-api_yaml = get_body("https://raw.githubusercontent.com/github/rest-api-description/#{commit['sha']}/descriptions/api.github.com/api.github.com.yaml")
-(api_dir / 'api.github.com.yaml').write(api_yaml)
-
-# sanity check
-unless JSON.parse(api_json) == YAML.safe_load(api_yaml)
-  abort("api.github.com.yaml != api.github.com.json")
-end
+ghcp['api.github.com.oas-3-0.yaml', 'descriptions/api.github.com/api.github.com.yaml']
+ghcp['api.github.com.oas-3-1.yaml', 'descriptions-next/api.github.com/api.github.com.yaml']
 
 (api_dir / 'updated.yml').write(YAML.dump({
   'comment' => "The commit from which other files in this directory were updated (using bin/nonacat_update)",
