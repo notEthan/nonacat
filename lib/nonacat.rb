@@ -7,6 +7,31 @@ require("zlib")
 require("faraday/follow_redirects")
 
 module Nonacat
+  # a module for JSI instances whose content is a URL corresponding to an operation of the OpenAPI description
+  module Link
+    # see [JSI::Base](https://rubydoc.info/gems/jsi/JSI/Base#jsi_as_child_default_as_jsi-instance_method)
+    def jsi_as_child_default_as_jsi
+      !jsi_node_content.nil?
+    end
+
+    def get(**conf, &b)
+      get_request(**conf, &b).run
+    end
+
+    # @return [Scorpio::Request]
+    def get_request(**conf, &b)
+      uri = JSI::URI[self]
+      conf[:query_params] = [uri.query_values, conf.delete(:query_params), conf.delete('query_params')].inject(nil) { |c, p| c ? p ? c.merge(p) : c : p }
+      GITHUB_API.operations.each do |operation|
+        next if !operation.get?
+        path_params = operation.uri_template.extract(operation.base_url.join(uri.merge(query: nil))) || next
+        conf[:path_params] = [conf.delete(:path_params), conf.delete('path_params')].inject(path_params) { |c, p| p ? c.merge(p) : c }
+        return operation.build_request(**conf, &b)
+      end
+      raise("no operation matched url: #{jsi_node_content}")
+    end
+  end
+
   oass = ['3-0', '3-1']
   oas = !ENV['NC_OAS'] ? oass.first : oass.include?(ENV['NC_OAS']) ? ENV['NC_OAS'] : abort("expected env NC_OAS in #{oass.join(', ')}")
   GITHUB_API_PATH = Pathname.new(__dir__).join(-"../github-rest-api-description/api.github.com.oas-#{oas}.json.zz")
