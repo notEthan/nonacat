@@ -50,8 +50,9 @@ module Nonacat
 
       node_describes_url = node.jsi_is_schema? && (
         node.keyword_value?('format', 'uri') ||
-        (node.keyword_value?('type', 'string') && node.example.respond_to?(:to_str) && node.example['://'])
-      )
+        (node.keyword_value?('type', 'string') && (
+          (node.jsi_ptr.tokens.last.respond_to?(:to_str) && node.jsi_ptr.tokens.last =~ /_url\z/) ||
+          (node.example.respond_to?(:to_str) && node.example['://']))))
       if node_describes_url
         node.jsi_schema_module.include(Nonacat::Link)
       end
