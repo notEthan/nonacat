@@ -15,6 +15,13 @@ module Nonacat
   GITHUB_API = Scorpio.new_document(
     JSON.parse(Zlib.inflate(GITHUB_API_PATH.read)),
     after_initialize: proc do |node|
+      # Name schema components like Github::CodeSearchResultItem, Github::Repository, etc.
+      if node.jsi_is_schema? && !node.jsi_schema_module_name
+        if node.jsi_ptr.parent == JSI::Ptr['components', 'schemas']
+          const_name = JSI::Util::Private.const_name_from_parts(node.jsi_ptr.tokens.last.to_s.split(/[_-]/)) # TODO shouldn't use JSI privates
+          Github.const_set(const_name, node.jsi_schema_module) if const_name && !Github.constants.include?(const_name.to_sym)
+        end
+      end
     end,
   )
 
