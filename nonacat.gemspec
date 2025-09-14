@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = ["lib"]
   spec.bindir        = 'bin'
-  spec.executables   = ['nonacat_update']
+  spec.executables   = ['nonacat', 'nonacat_update']
 
   spec.add_dependency('scorpio', '~> 0.7')
   spec.add_dependency('faraday-follow_redirects')
