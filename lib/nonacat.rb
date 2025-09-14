@@ -6,7 +6,9 @@ require("pathname")
 require("zlib")
 
 module Nonacat
-  GITHUB_API_PATH = Pathname.new(__dir__).join('../github-rest-api-description/api.github.com.oas-3-0.json.zz')
+  oass = ['3-0', '3-1']
+  oas = !ENV['NC_OAS'] ? oass.first : oass.include?(ENV['NC_OAS']) ? ENV['NC_OAS'] : abort("expected env NC_OAS in #{oass.join(', ')}")
+  GITHUB_API_PATH = Pathname.new(__dir__).join(-"../github-rest-api-description/api.github.com.oas-#{oas}.json.zz")
 
   # A [Scorpio::OpenAPI::Document](https://rubydoc.info/gems/scorpio/Scorpio/OpenAPI/Document) for Github's API
   GITHUB_API = Scorpio.new_document(JSON.parse(Zlib.inflate(GITHUB_API_PATH.read)))
