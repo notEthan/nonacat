@@ -4,5 +4,19 @@ $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require('nonacat')
 
 
+proc do
+  # authorization from ~/.config/gh/hosts.yml, as used by gh-cli
+  gh_hosts_path = Pathname.new('~').expand_path.join('.config/gh/hosts.yml')
+  next unless gh_hosts_path.exist?
+  hosts = YAML.safe_load_file(gh_hosts_path)
+
+  # TODO not great
+  gh = hosts['github.com'] || next
+  token = gh['oauth_token'] || gh['users']&.values&.first&.[]('oauth_token') || next
+
+  Nonacat.authorization = ['Bearer', token]
+end[]
+
+
 require('irb')
 IRB.start(__FILE__)
