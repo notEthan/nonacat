@@ -48,28 +48,14 @@ module Nonacat
     def paginate_items(operation, **conf, &block)
       return to_enum(__method__, operation, **conf) unless block_given?
       operation = operation.is_a?(Scorpio::OpenAPI::Operation) ? operation : GITHUB_API.operations[operation]
-
-      # detect pagination by response schemas
-      each_item = nil
-      operation.responses.each do |status, oa_response|
-        next if status.to_s !~ /^2..$/
-        oa_response['content'].each_value.select(&:schema).each do |oa_media_type|
-          # TODO not very good
-          oa_media_type.schema.each_inplace_applicator_schema(nil) do |ias|
-            if ias.items
-              # each page is an array with each item
-              each_item = proc { |body_object| body_object }
-            elsif ias.properties && ias.properties['items'] && ias.properties['items'].items
-              # each page is an object with property 'items' containing an array with each item
-              each_item = proc { |body_object| body_object.items }
-            end
-          end
-        end
-      end
-      raise("pagination not detected in operation: #{operation.pretty_inspect.chomp}") if !each_item
-
       operation.each_link_page(**conf) do |page_ur|
-        each_item[page_ur.response.body_object].each(&block)
+        if page_ur.response.body_object.jsi_schemas.any? { |s| s.items }
+          page_ur.response.body_object.each(&block)
+        elsif page_ur.response.body_object.jsi_schemas.any? { |s| s.properties && s.properties['items'] && s.properties['items'].items }
+          page_ur.response.body_object.items.each(&block)
+        else
+          raise("pagination not detected in operation response.\noperation: #{operation.pretty_inspect.chomp}\nresponse ur: #{page_ur.pretty_inspect.chomp}")
+        end
       end
     end
   end
