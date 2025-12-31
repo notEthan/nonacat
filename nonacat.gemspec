@@ -28,4 +28,5 @@ Gem::Specification.new do |spec|
   spec.executables   = ['nonacat_update']
 
   spec.add_dependency('scorpio', '~> 0.7')
+  spec.add_dependency('faraday-follow_redirects')
 end

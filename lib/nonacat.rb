@@ -4,6 +4,7 @@ require("nonacat/version")
 require("scorpio")
 require("pathname")
 require("zlib")
+require("faraday/follow_redirects")
 
 module Nonacat
   oass = ['3-0', '3-1']
@@ -15,6 +16,7 @@ module Nonacat
 
   GITHUB_API.faraday_builder = proc do |conn|
     conn.request(:authorization, *Nonacat.authorization) if Nonacat.authorization
+    conn.use(Faraday::FollowRedirects::Middleware)
   end
 
   class << self
