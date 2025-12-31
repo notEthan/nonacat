@@ -49,10 +49,10 @@ module Nonacat
       return to_enum(__method__, operation, **conf) unless block_given?
       operation = operation.is_a?(Scorpio::OpenAPI::Operation) ? operation : GITHUB_API.operations[operation]
       operation.each_link_page(**conf) do |page_ur|
-        if page_ur.response.body_object.jsi_schemas.any? { |s| s.items }
+        if page_ur.response.body_object.respond_to?(:to_ary)
           page_ur.response.body_object.each(&block)
-        elsif page_ur.response.body_object.jsi_schemas.any? { |s| s.properties && s.properties['items'] && s.properties['items'].items }
-          page_ur.response.body_object.items.each(&block)
+        elsif page_ur.response.body_object.respond_to?(:to_hash) && page_ur.response.body_object.key?('items') && page_ur.response.body_object['items'].respond_to?(:to_ary)
+          page_ur.response.body_object['items'].each(&block)
         else
           raise("pagination not detected in operation response.\noperation: #{operation.pretty_inspect.chomp}\nresponse ur: #{page_ur.pretty_inspect.chomp}")
         end
