@@ -14,6 +14,7 @@ module Nonacat
   # A [Scorpio::OpenAPI::Document](https://rubydoc.info/gems/scorpio/Scorpio/OpenAPI/Document) for Github's API
   GITHUB_API = Scorpio.new_document(JSON.parse(Zlib.inflate(GITHUB_API_PATH.read)))
 
+  Github = GITHUB_API.jsi_schema_module_connection
   module Github end
 
   GITHUB_API.faraday_builder = proc do |conn|
