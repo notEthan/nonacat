@@ -4,6 +4,22 @@ $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require('nonacat')
 
 
+# name Nonacat::<CATEGORY NAME>, Nonacat::<CATEGORY NAME>::<OPERATION NAME>, and Nonacat::<CATEGORY NAME>.<operation name> for irb tab-completable operation access
+
+category_namespaces = Hash.new do |h, category|
+  category_namespace = Module.new { define_singleton_method(:category) { category } }
+  Nonacat.define_singleton_method(category.tr('-', '_')) { category_namespace }
+  Nonacat.const_set(category.tr('-', '_').upcase, category_namespace)
+  h[category] = category_namespace
+end
+
+Nonacat::GITHUB_API.operations.each do |operation|
+  category, name = operation.operationId.match(%r(\A([\w-]+)/([\w-]+)\z)).captures
+  category_namespaces[category].const_set(name.tr('-', '_').upcase, operation)
+  category_namespaces[category].define_singleton_method(name.tr('-', '_')) { operation }
+end
+
+
 proc do
   # authorization from ~/.config/gh/hosts.yml, as used by gh-cli
   gh_hosts_path = Pathname.new('~').expand_path.join('.config/gh/hosts.yml')
