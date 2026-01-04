@@ -21,6 +21,8 @@ Gem::Specification.new do |spec|
   ].reject { |f| File.lstat(f).ftype == 'directory' }
 
   spec.require_paths = ["lib"]
+  spec.bindir        = 'bin'
+  spec.executables   = []
 
   spec.add_dependency('scorpio', '~> 0.6')
 end
