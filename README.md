@@ -72,8 +72,8 @@ Returns (trimmed)
   "owner" => #{<JSI (Nonacat::Github::SimpleUser)>
     "login" => "notEthan",
   },
-  "url" => "https://api.github.com/repos/notEthan/scorpio",
-  "forks_url" => "https://api.github.com/repos/notEthan/scorpio/forks",
+  "url" => #<JSI (Nonacat::Github::FullRepository.properties["url"]) "https://api.github.com/repos/notEthan/scorpio">,
+  "forks_url" => #<JSI (Nonacat::Github::FullRepository.properties["forks_url"]) "https://api.github.com/repos/notEthan/scorpio/forks">,
   "language" => "Ruby",
 }
 ```
@@ -93,14 +93,18 @@ Output (trimmed):
 #{<JSI (Nonacat::Github::CodeSearchResultItem)>
   "name" => "nonacat.rb",
   "path" => "lib/nonacat.rb",
-  "url" => "https://api.github.com/repositories/898892904/contents/lib/nonacat.rb?ref=a253ff2a2c9b1229f2feea63f22a6ba7b21d1dd3",
+  "url" => #<JSI (Nonacat::Github::CodeSearchResultItem.properties["url"])
+    "https://api.github.com/repositories/898892904/contents/lib/nonacat.rb?ref=a253ff2a2c9b1229f2feea63f22a6ba7b21d1dd3"
+  >,
   "repository" => #{<JSI (Nonacat::Github::MinimalRepository)>
     "name" => "nonacat",
     "full_name" => "notEthan/nonacat",
     "owner" => #{<JSI (Nonacat::Github::SimpleUser)>
       "login" => "notEthan",
     },
-    "html_url" => "https://github.com/notEthan/nonacat",
+    "html_url" => #<JSI (Nonacat::Github::MinimalRepository.properties["html_url"])
+      "https://github.com/notEthan/nonacat"
+    >,
   },
   "score" => 1.0
 }
