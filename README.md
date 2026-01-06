@@ -43,6 +43,10 @@ Nonacat includes an executable `nonacat`, which is just IRB with nonacat loaded 
 - Authentication is loaded from the same source as the github [`gh` CLI](https://cli.github.com/), if available.
 - Tab-completable references to operations are defined. Github's operations are categorized, e.g. the `repos/get` operation with category `repos`. The `nonacat` executable defines constants like `Nonacat::REPOS` for each category, which in turn contain constants for each operation. With these, `Nonacat::REPOS::GET` refers to the same operation as `Nonacat::GITHUB_API.operations['repos/get']`.
 
+### Links
+
+Many Github resources link to other resources with inline URLs, e.g. a repo resource has a `forks_url` property linking to the `repos/list-forks` operation's path. Nonacat extends these URLs with {Nonacat::Link} and the linked resource can be retrieved with `#get`, e.g. `forks = my_repo.forks_url.get`. (See the example "Get linked repository forks" below.)
+
 ### Pagination
 
 Many Github API operations paginate results. {Nonacat.paginate_items} abstracts pagination - see its method doc, and examples below.
@@ -76,6 +80,33 @@ Returns (trimmed)
   "forks_url" => #<JSI (Nonacat::Github::FullRepository.properties["forks_url"]) "https://api.github.com/repos/notEthan/scorpio/forks">,
   "language" => "Ruby",
 }
+```
+
+- Get linked repository forks (using `repo` from previous example)
+
+```
+forks = repo.forks_url.get
+```
+
+That connects the `forks_url` to the `repos/list-forks` operation, essentially running `forks = Nonacat.operations["repos/list-forks"].run(owner: 'notEthan', repo: 'scorpio')`
+
+Returns (trimmed)
+
+```
+#[<JSI (Nonacat::Github.paths["/repos/{owner}/{repo}/forks"].get.responses["200"].content["application/json"].schema)>
+  #{<JSI (Nonacat::Github::MinimalRepository)>
+    "id" => 86715358,
+    "name" => "scorpio",
+    "full_name" => "mathieujobin/scorpio",
+    "owner" => #{<JSI (Nonacat::Github::SimpleUser)>
+      "login" => "mathieujobin",
+    },
+    "fork" => true,
+    "url" => #<JSI (Nonacat::Github::MinimalRepository.properties["url"]) "https://api.github.com/repos/mathieujobin/scorpio">,
+    "forks_url" => #<JSI (Nonacat::Github::MinimalRepository.properties["forks_url"]) "https://api.github.com/repos/mathieujobin/scorpio/forks">,
+    "language" => "Ruby",
+  }
+]
 ```
 
 - Search code, paginated (requires auth) - this pauses between each item; press enter to continue or `q` + enter to quit.
