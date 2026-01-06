@@ -181,11 +181,8 @@ Returns (trimmed)
 Nonacat.paginate_items("repos/list-tags", owner: 'notEthan', repo: 'nonacat').map do |tag|
   {
     name: tag.name,
-    date: Nonacat::GITHUB_API.operations["repos/get-commit"].run(
-      owner: 'notEthan',
-      repo: 'nonacat',
-      ref: tag.commit.sha,
-    ).commit.committer.date,
+    # tag.commit includes very little; its `url` links to get the full commit resource
+    date: tag.commit.url.get.commit.committer.date,
   }
 end
 ```
