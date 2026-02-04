@@ -36,6 +36,13 @@ get_repo_operation = Nonacat::GITHUB_API.paths['/repos/{owner}/{repo}'].get
 
 Its id is `repos/get` (from `get_repo_operation.operationId`). You can use such an id to retrieve an operation, e.g. `Nonacat::GITHUB_API.operations['repos/get']`. Finding the id of an operation can be slightly inconvenient as it is not included on Github's HTML pages of API documentation. Available `operationId`s can be iterated with e.g. `Nonacat::GITHUB_API.operations.map(&:operationId)` or `Nonacat::GITHUB_API.operations.tagged("gists").map(&:operationId)`.
 
+### `nonacat` executable
+
+Nonacat includes an executable `nonacat`, which is just IRB with nonacat loaded and some additions for convenience:
+
+- Authentication is loaded from the same source as the github [`gh` CLI](https://cli.github.com/), if available.
+- Tab-completable references to operations are defined. Github's operations are categorized, e.g. the `repos/get` operation with category `repos`. The `nonacat` executable defines constants like `Nonacat::REPOS` for each category, which in turn contain constants for each operation. With these, `Nonacat::REPOS::GET` refers to the same operation as `Nonacat::GITHUB_API.operations['repos/get']`.
+
 ### Examples
 
 - Get Zen (no auth required)
