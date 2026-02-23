@@ -24,5 +24,5 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'bin'
   spec.executables   = []
 
-  spec.add_dependency('scorpio', '~> 0.6')
+  spec.add_dependency('scorpio', '~> 0.7')
 end
