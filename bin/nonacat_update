@@ -19,27 +19,26 @@ def get_body(url)
   response.body
 end
 
-main_branch = JSON.parse(get_body('https://api.github.com/repos/github/rest-api-description/branches/main'))
-main_sha = main_branch['commit']['sha']
+commit = JSON.parse(get_body("https://api.github.com/repos/github/rest-api-description/commits/main"))
 
-if (api_dir / 'updated.yml').exist? && YAML.safe_load_file(api_dir / 'updated.yml')['sha'] == main_sha
-  STDERR.puts("already up to date at commit #{main_sha}; skipping (rm #{api_dir / 'updated.yml'} to force)")
+if (api_dir / 'updated.yml').exist? && YAML.safe_load_file(api_dir / 'updated.yml')['sha'] == commit['sha']
+  STDERR.puts("already up to date at commit #{commit['sha']}; skipping (rm #{api_dir / 'updated.yml'} to force)")
   exit
 end
 
 STDERR.puts("fetching LICENSE.md")
-(api_dir / 'LICENSE.md').write(get_body("https://raw.githubusercontent.com/github/rest-api-description/#{main_sha}/LICENSE.md"))
+(api_dir / 'LICENSE.md').write(get_body("https://raw.githubusercontent.com/github/rest-api-description/#{commit['sha']}/LICENSE.md"))
 
 STDERR.puts("fetching api.github.com.json")
 # getting this from the API is another option but it doesn't gzip so much slower
-# at: "https://api.github.com/repos/github/rest-api-description/contents/descriptions/api.github.com/api.github.com.json?ref=#{main_sha}"
+# at: "https://api.github.com/repos/github/rest-api-description/contents/descriptions/api.github.com/api.github.com.json?ref=#{commit['sha']}"
 # with accept: 'application/vnd.github.raw'
-api_json = get_body("https://raw.githubusercontent.com/github/rest-api-description/#{main_sha}/descriptions/api.github.com/api.github.com.json")
+api_json = get_body("https://raw.githubusercontent.com/github/rest-api-description/#{commit['sha']}/descriptions/api.github.com/api.github.com.json")
 (api_dir / 'api.github.com.json.zz').write(Zlib.deflate(api_json))
 
 # the YAML can be useful to browse for development but is excluded from the gem and git repo due to size
 STDERR.puts("fetching api.github.com.yaml")
-api_yaml = get_body("https://raw.githubusercontent.com/github/rest-api-description/#{main_sha}/descriptions/api.github.com/api.github.com.yaml")
+api_yaml = get_body("https://raw.githubusercontent.com/github/rest-api-description/#{commit['sha']}/descriptions/api.github.com/api.github.com.yaml")
 (api_dir / 'api.github.com.yaml').write(api_yaml)
 
 # sanity check
@@ -49,8 +48,8 @@ end
 
 (api_dir / 'updated.yml').write(YAML.dump({
   'comment' => "The commit from which other files in this directory were updated (using bin/nonacat_update)",
-  'sha' => main_branch['commit']['sha'],
-  'date' => main_branch['commit']['commit']['committer']['date'],
+  'sha' => commit['sha'],
+  'date' => commit['commit']['committer']['date'],
 }))
 
 STDERR.puts("updated!")
