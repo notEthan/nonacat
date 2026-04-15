@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Fetch Github's OpenAPI document from the current `main` branch of https://github.com/github/rest-api-description
+# Fetch Github's OpenAPI document from git ref ARGV[0] or the current `main` branch of https://github.com/github/rest-api-description
 # For the gem, store the JSON compressed with zlib since, at 11 MB, it is rather excessive.
 # For development, store the YAML for readability.
 
@@ -19,7 +19,8 @@ def get_body(url)
   response.body
 end
 
-commit = JSON.parse(get_body("https://api.github.com/repos/github/rest-api-description/commits/main"))
+ref = ARGV[0] || 'main'
+commit = JSON.parse(get_body("https://api.github.com/repos/github/rest-api-description/commits/#{ref}"))
 
 if (api_dir / 'updated.yml').exist? && YAML.safe_load_file(api_dir / 'updated.yml')['sha'] == commit['sha']
   STDERR.puts("already up to date at commit #{commit['sha']}; skipping (rm #{api_dir / 'updated.yml'} to force)")
