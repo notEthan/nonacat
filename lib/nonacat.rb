@@ -77,9 +77,10 @@ module Nonacat
     # Yields each item in each page of results from the indicated operation.
     #
     # @param operation [String, Scorpio::OpenAPI::Operation] an operationId or an Operation
+    # @param ratelimit [Boolean] when a response indicates insufficent remaining ratelimit, sleep until limit will reset
     # @yield [JSI::Base] each item in each page of results
     # @return [nil, Enumerator]
-    def paginate_items(operation, **conf, &block)
+    def paginate_items(operation, ratelimit: true, **conf, &block)
       return to_enum(__method__, operation, **conf) unless block_given?
       operation = operation.is_a?(Scorpio::OpenAPI::Operation) ? operation : GITHUB_API.operations[operation]
       operation.each_link_page(**conf) do |page_ur|
@@ -89,6 +90,9 @@ module Nonacat
           page_ur.response.body_object['items'].each(&block)
         else
           raise("pagination not detected in operation response.\noperation: #{operation.pretty_inspect.chomp}\nresponse ur: #{page_ur.pretty_inspect.chomp}")
+        end
+        if ratelimit && page_ur.response.headers['x-ratelimit-remaining'] && Float(page_ur.response.headers['x-ratelimit-remaining']) <= 1 && page_ur.response.headers['x-ratelimit-reset']
+          sleep(1 + (Time.at(Float(page_ur.response.headers['x-ratelimit-reset'])) - Time.now))
         end
       end
     end
