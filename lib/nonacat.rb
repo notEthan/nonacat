@@ -77,7 +77,7 @@ module Nonacat
     # Yields each item in each page of results from the indicated operation.
     #
     # @param operation [String, Scorpio::OpenAPI::Operation] an operationId or an Operation
-    # @param ratelimit [Boolean] when a response indicates insufficent remaining ratelimit, sleep until limit will reset
+    # @param ratelimit [Boolean] {.ratelimit} each response
     # @yield [JSI::Base] each item in each page of results
     # @return [nil, Enumerator]
     def paginate_items(operation, ratelimit: true, **conf, &block)
@@ -91,10 +91,16 @@ module Nonacat
         else
           raise("pagination not detected in operation response.\noperation: #{operation.pretty_inspect.chomp}\nresponse ur: #{page_ur.pretty_inspect.chomp}")
         end
-        if ratelimit && page_ur.response.headers['x-ratelimit-remaining'] && Float(page_ur.response.headers['x-ratelimit-remaining']) <= 1 && page_ur.response.headers['x-ratelimit-reset']
-          sleep(1 + (Time.at(Float(page_ur.response.headers['x-ratelimit-reset'])) - Time.now))
-        end
+        Nonacat.ratelimit(page_ur) if ratelimit
       end
+    end
+
+    # If the given ur's response indicates insufficent remaining ratelimit, sleep until limit will reset
+    def ratelimit(ur)
+      if ur.response.headers['x-ratelimit-remaining'] && Float(ur.response.headers['x-ratelimit-remaining']) <= 1 && ur.response.headers['x-ratelimit-reset']
+        sleep(1 + (Time.at(Float(ur.response.headers['x-ratelimit-reset'])) - Time.now))
+      end
+      ur
     end
   end
 end
