@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
   spec.files = [
     'LICENSE.txt',
     'README.md',
+    '.yardopts',
     'nonacat.gemspec',
     *Dir['lib/**/*'],
     'github-rest-api-description/LICENSE.md',
